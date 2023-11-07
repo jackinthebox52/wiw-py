@@ -1,0 +1,1 @@
+Authentication details are read from environment variables 'WIW_EMAIL' and 'WIW_PASSWORD'
