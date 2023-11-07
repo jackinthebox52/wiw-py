@@ -14,6 +14,7 @@ class HTTPSession:
     :param location (optional): The location id to restrict queries to. If None, queries will not be restricted.
     :type location: str
     '''
+    PACKAGE_DATA = None
     LOGIN_DETAILS = []
     LOGGED = False
     LOCATION = None #Location id to restrict queries #TODO: Implement location restriction
@@ -23,7 +24,7 @@ class HTTPSession:
         print('Initializing HTTP api session...')
         if 'WIW_EMAIL' in os.environ and 'WIW_PASSWORD' in os.environ:
             self.LOGIN_DETAILS = [os.environ['WIW_EMAIL'], os.environ['WIW_PASSWORD']]
-            
+        self.PACKAGE_DATA = _get_package_data_dir()
         self.session = requests.Session()
         if not self.token_login():
             self.credential_login()
@@ -148,12 +149,12 @@ class HTTPSession:
         self.session.headers = original_headers
         return res
 
+
     def _write_session(self):
         '''
         Writes the session cookie to a local file.
         '''
-        package_data = _get_package_data_dir()
-        with open(package_data / 'sessioncookie', 'w') as f:
+        with open(self.PACKAGE_DATA / 'sessioncookie', 'w') as f:
             print(f'header {self.session.headers["Authorization"]}')
             f.write(self.session.headers['Authorization'])
 
@@ -161,9 +162,8 @@ class HTTPSession:
         '''
         Reads the session cookie from a local file, returns False if the file does not exist, returns the token if it does.
         '''
-        package_data = _get_package_data_dir()
         try:
-            with open(package_data / 'sessioncookie', 'r') as f:
+            with open(self.PACKAGE_DATA / 'sessioncookie', 'r') as f:
                 token = f.read()
                 self.session.headers.update({'Authorization': token})
                 return token
@@ -190,13 +190,35 @@ def _get_package_data_dir():
             return expected_path_2
     return expected_path
 
+def _write_json(data: dict, filename: str):
+    '''
+    Writes a json object to a file.
+    :param data: The json object to write.
+    :type data: dict
+    :param filename: The name of the file to write to.
+    :type filename: str
+    '''
+    with open(filename, 'w') as f:
+        json.dump(data, f)
+
+def _read_json(filename: str):
+    '''
+    Reads a json object from the specified file in the package data directory.
+    :param filename: The name of the file to read from.
+    :type filename: str
+    :return: The json object.
+    :rtype: dict
+    '''
+    package_data = _get_package_data_dir()
+    with open(package_data / filename, 'r') as f:
+        return json.load(f)
+
+
 def main():
     session = HTTPSession()
     shifts = session.list_open_shifts()
     requests = session.list_requests()
-    with open('./shifts.json', 'w') as f:
-        json.dump(shifts, f)
-
+    _write_json(shifts, session.PACKAGE_DATA / 'shifts.json')
 
 if __name__ == "__main__":
     main()
