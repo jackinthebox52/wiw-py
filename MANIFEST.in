@@ -1,1 +1,1 @@
-include src/wiw-py/package_data
+include src/wiw-py/package_data/*

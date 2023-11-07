@@ -2,6 +2,7 @@ import requests
 import json
 import os
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 WIW_DEBUG = False
 
@@ -15,7 +16,7 @@ class HTTPSession:
     '''
     LOGIN_DETAILS = []
     LOGGED = False
-    LOCATION = None #Location id to restrict queries
+    LOCATION = None #Location id to restrict queries #TODO: Implement location restriction
 
     def __init__(self, location: str=None):
         '''Initializes a new session with the WhenIWork API.'''
@@ -151,21 +152,43 @@ class HTTPSession:
         '''
         Writes the session cookie to a local file.
         '''
-        with open('./sessioncookie', 'w') as f:
+        package_data = _get_package_data_dir()
+        with open(package_data / 'sessioncookie', 'w') as f:
+            print(f'header {self.session.headers["Authorization"]}')
             f.write(self.session.headers['Authorization'])
 
     def _read_session(self):
         '''
         Reads the session cookie from a local file, returns False if the file does not exist, returns the token if it does.
         '''
+        package_data = _get_package_data_dir()
         try:
-            with open('./sessioncookie', 'r') as f:
+            with open(package_data / 'sessioncookie', 'r') as f:
                 token = f.read()
                 self.session.headers.update({'Authorization': token})
                 return token
         except FileNotFoundError:
             return False
 
+    #################END CLASS#####################
+
+def _get_package_data_dir():
+    '''
+    Locates and returns the path to the package data directory.
+    :return: The path to the package data directory.
+    :rtype: pathlib.Path
+    '''
+    expected_path = Path(__file__.split('/wheniwork.py')[0]) / 'package_data'
+    if not expected_path.is_dir():
+        raise Exception(f'Could not find package data directory. at {expected_path}')
+    if not expected_path.is_dir():
+        expected_path_2 = Path(os.path.expanduser('~')) / '.wiw-py' / 'package_data'
+        if not expected_path_2.is_dir():
+            expected_path_2.mkdir(parents=True)
+            return expected_path_2
+        else:
+            return expected_path_2
+    return expected_path
 
 def main():
     session = HTTPSession()
