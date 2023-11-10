@@ -187,16 +187,25 @@ def _get_package_data_dir():
     :rtype: pathlib.Path
     '''
     expected_path = Path(__file__.split('/wheniwork.py')[0]) / 'package_data'
-    if not expected_path.is_dir():
-        raise Exception(f'Could not find package data directory. at {expected_path}')
-    if not expected_path.is_dir():
+    if not _is_package_data_dir(expected_path):
         expected_path_2 = Path(os.path.expanduser('~')) / '.wiw-py' / 'package_data'
-        if not expected_path_2.is_dir():
+        if not _is_package_data_dir(expected_path_2):
             expected_path_2.mkdir(parents=True)
             return expected_path_2
         else:
             return expected_path_2
     return expected_path
+
+def _is_package_data_dir(path: Path):
+    '''
+    Checks if the specified path is the package data directory.
+    :param path: The path to check.
+    :type path: pathlib.Path
+    :return: True if the specified path is the package data directory, False otherwise.
+    :rtype: bool
+    '''
+    return path.is_dir() and path.name == 'package_data' and '.LICENSE' in os.listdir(path)
+
 
 def _write_json(data: dict, filename: str):
     '''
