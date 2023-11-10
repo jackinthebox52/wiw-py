@@ -14,16 +14,25 @@ class HTTPSession:
     :param location (optional): The location id to restrict queries to. If None, queries will not be restricted.
     :type location: str
     '''
-    PACKAGE_DATA = None
-    LOGIN_DETAILS = []
     LOGGED = False
     LOCATION = None #Location id to restrict queries #TODO: Implement location restriction
 
-    def __init__(self, location: str=None):
-        '''Initializes a new session with the WhenIWork API.'''
+    def __init__(self, location: str=None, login_details: list=None):
+        '''
+        Initializes a new session with the WhenIWork API.
+        :param location: The location id to restrict queries to. If None, queries will not be restricted.
+        :type location: str
+        :param login_details: A list containing the email and password to use for login. If None, login details will be read from environment variables.
+        :type login_details: list
+        '''
         print('Initializing HTTP api session...')
-        if 'WIW_EMAIL' in os.environ and 'WIW_PASSWORD' in os.environ:
-            self.LOGIN_DETAILS = [os.environ['WIW_EMAIL'], os.environ['WIW_PASSWORD']]
+        if login_details is None:
+            if 'WIW_EMAIL' in os.environ and 'WIW_PASSWORD' in os.environ:
+                self.LOGIN_DETAILS = [os.environ['WIW_EMAIL'], os.environ['WIW_PASSWORD']]
+            if self.LOGIN_DETAILS is None:
+                raise Exception('Could not find login details. Please set WIW_EMAIL and WIW_PASSWORD environment variables, or supply them to the HTTPSession constructor.')
+        else:
+            self.LOGIN_DETAILS = login_details
         self.PACKAGE_DATA = _get_package_data_dir()
         self.session = requests.Session()
         if not self.token_login():
@@ -123,12 +132,11 @@ class HTTPSession:
         self.session.headers.update(headers)
         data=json.dumps({'shift_ids': id_list})
         res = self.session.post(f'https://api.wheniwork.com/2/shifts/unassign', data)
-        if len(res.json()['shifts']) == 0:
+        print(res.json())
+        self.session.headers = original_headers
+        if 'shifts' not in res.json():
             print(f'Failed to release shift {shift_id}.')
             res = False
-        else:
-            print(f'Released shift {shift_id}.')    #DEBUG
-        self.session.headers = original_headers
         return res
 
     def take_shift(self, shift_id: int=None):
@@ -141,12 +149,13 @@ class HTTPSession:
         headers = {'Content-type': 'application/json'}
         self.session.headers.update(headers)
         res = self.session.post(f'https://api.wheniwork.com/2/shifts/{shift_id}/take')
-        if res.json()['shift']['is_open']:
+        print(res.json())
+        self.session.headers = original_headers
+        if 'shift' not in res.json():
             print(f'Failed to take shift {shift_id}.')
             res = False
         else:
             print(f'Took shift {shift_id}.') #DEBUG
-        self.session.headers = original_headers
         return res
 
 
@@ -155,7 +164,6 @@ class HTTPSession:
         Writes the session cookie to a local file.
         '''
         with open(self.PACKAGE_DATA / 'sessioncookie', 'w') as f:
-            print(f'header {self.session.headers["Authorization"]}')
             f.write(self.session.headers['Authorization'])
 
     def _read_session(self):
@@ -216,8 +224,10 @@ def _read_json(filename: str):
 
 def main():
     session = HTTPSession()
-    shifts = session.list_open_shifts()
+    shifts = session.list_my_shifts()
     requests = session.list_requests()
+    #t = session.take_shift(3188245863)
+    #r = session.release_shift(3194516684)
     _write_json(shifts, session.PACKAGE_DATA / 'shifts.json')
 
 if __name__ == "__main__":
