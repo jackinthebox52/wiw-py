@@ -25,6 +25,7 @@ class HTTPSession:
         :param login_details: A list containing the email and password to use for login. If None, login details will be read from environment variables.
         :type login_details: list
         '''
+        self.LOGIN_DETAILS = []
         print('Initializing HTTP api session...')
         if login_details is None:
             if 'WIW_EMAIL' in os.environ and 'WIW_PASSWORD' in os.environ:
@@ -102,6 +103,12 @@ class HTTPSession:
             if shift['user_id'] != '0':
                 json['shifts'].remove(shift)
         return json
+
+    def get_availability(self):
+        '''
+        Returns the current user's availability.
+        '''
+        return self.session.post('https://api.wheniwork.com/2/availabilityevents/list').json()
 
     def list_requests(self):
         '''
@@ -237,6 +244,7 @@ def main():
     requests = session.list_requests()
     #t = session.take_shift(3188245863)
     #r = session.release_shift(3194516684)
+    print(session.get_availability())
     _write_json(shifts, session.PACKAGE_DATA / 'shifts.json')
 
 if __name__ == "__main__":
