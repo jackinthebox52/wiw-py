@@ -110,11 +110,12 @@ class HTTPSession:
         '''
         return self.session.post('https://api.wheniwork.com/2/availabilityevents/list').json()
 
-    def list_requests(self):
+    def get_time_off_request_types(self):
         '''
-        Returns a list of all requests for the current user.
+        Returns the time off request types from the /requesttypes endpoint.
         '''
-        return self.session.get('https://api.wheniwork.com/2/requests').json()
+        return self.session.get('https://api.wheniwork.com/2/requesttypes').json()
+
 
     def release_shift(self, shift_id: int=None, shift_ids: list=None):
         '''
