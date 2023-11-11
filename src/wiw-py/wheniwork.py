@@ -76,7 +76,7 @@ class HTTPSession:
         self._write_session()
         return True
 
-    def list_my_shifts(self):
+    def get_my_shifts(self):
         '''
         Compiles a list of all shifts that the current user is scheduled for, for the next 365 days, using the /shifts endpoint.
         :return: A list of shifts.
@@ -88,7 +88,7 @@ class HTTPSession:
 
         return self.session.get(f'https://api.wheniwork.com/2/shifts?user_id={id}&start={current_time}&end={end_time}').json()
 
-    def list_open_shifts(self):
+    def get_open_shifts(self):
         '''
         Compiles a list of all shifts for the current user, for the next 365 days, utilizing the /shifts endpoint.
         :return: A dict of shifts.
@@ -116,6 +116,27 @@ class HTTPSession:
         '''
         return self.session.get('https://api.wheniwork.com/2/requesttypes').json()
 
+    def post_time_off_request(self, start_time: str, end_time: str):
+        '''
+        Posts a time off request to the /requests endpoint. #TODO: Implement this
+        '''
+        data = {"saving":false,
+                "dates":{},
+                "id":null,
+                "account_id":2595286,
+                "creator_id":null,
+                "hours":0,
+                "start_time":"2023-11-16T06:00:00.000Z",
+                "end_time":"2023-11-17T05:59:59.000Z",
+                "type":null,
+                "type_id":59933,
+                "paid":false,
+                "user_id":46724863,
+                "created_at":null,
+                "updated_at":null,
+                "canceled_by":null,
+                "updater_id":null}
+        return self.session.post('https://api.wheniwork.com/2/requests', json=data).json()
 
     def release_shift(self, shift_id: int=None, shift_ids: list=None):
         '''
